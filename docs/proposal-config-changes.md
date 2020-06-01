@@ -184,7 +184,8 @@ Discussed at CylcCon - no requirement for this.
 
 ### `[job platforms][]scp command` -> obsolete
 
-No longer used. Also remove the `cylc [util] scp-transfer` command.
+No longer used. Also remove the `cylc [util] scp-transfer` command (Done:
+[cylc-flow #3634](https://github.com/cylc/cylc-flow/pull/3634)).
 
 ### Updated global config
 
