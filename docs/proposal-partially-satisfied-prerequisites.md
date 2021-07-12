@@ -288,7 +288,7 @@ At Cylc 7 this would have been something like:
         b2 | c2 => d
         a => !c1 & !c2
         a:fail => !a & !b1 & !b2
-        d => !a
+        d => !a # prevent "a" disappearing from the GUI too quickly
 ```
 
 So, for backwards compatibility, we still need suicide triggers to work at Cylc 8 to prevent stalls.
