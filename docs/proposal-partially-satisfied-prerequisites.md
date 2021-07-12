@@ -292,20 +292,70 @@ At Cylc 7 this would have been something like:
 ```
 
 So, for backwards compatibility, we still need suicide triggers to work at Cylc 8 to prevent stalls.
-It is not possible to work out appropriate graph changes in advance so we need suicide triggers to appply at runtime as follows:
-If the suicided task is suicided then:
+It is not possible to work out appropriate graph changes in advance so we need suicide triggers to apply at runtime as follows:
 * If the suicided task is present in the task pool in the `waiting`, `submit-failed` or `run-failed` state then remove it.
 * If the suicided task is present in the task pool in the `preparing`, `submitted` or `running` state then remove it from all flows (to prevent further tasks being spawned) and log a warning (since it doesn't make sense for a task in these states to be suicided).
 * If the suicided task is not present in the task pool then no action is required.
+* If the suicided task is triggered by any task present in the task pool then convert that trigger into a null trigger (can't simply remove it in case it is a failure trigger?).
+  This attempts to deal with cases where a task is suicided before all its prerequisites have completed.
 
-Note that any workflows which are relying on suicide triggers in this way are likely to have tasks which become "blocked" for a period before they get cleared by a suicide trigger.
+Note that any workflows which rely on suicide triggers are likely to have tasks which become "blocked" for a period before they get cleared by a suicide trigger.
 How do we handle this?
 * Simply warn users than they may get notified of transient blocks for workflows which still rely on suicide triggers?
 * Don't treat any task as blocked if it has a suicide trigger anywhere in the graph?
 
+The above logic won't deal with all cases where a task is suicided before all its prerequisites have completed.
+For example:
+
+```ini
+[scheduling]
+    [[dependencies]]
+        graph = """
+                a => b => c => d
+                a => check-d => d
+                check-d:fail => !check-d & !d
+                """
+[runtime]
+    [[a,b,c,d]]
+        script = sleep 10
+    [[check-d]]
+        script = false
+```
+
+At Cylc 7 this will skip `d` and shutdown.
+With the proposed Cylc 8 logic, `d` will still get run because `c` is not in the task pool when `d` is suicided.
+The only obvious way to avoid this is to maintain a list of suicided tasks which gets checked before any task is spawned.
+However, that involves extra checks and another list to maintain and housekeep to handle a very obsure case.
+Perhaps we should accept that obscure uses of suicide triggers are not guaranteed to work as intended and document this in the migration guide?
+
 ## Suicide triggers
 
 So far, we have not thought of any cases where suicide triggers will be needed with the new syntax.
+Therefore, suicide triggers will only needed for backwards compatibility and can be flagged as deprecated.
+
+Here is an example where care is needed when replacing suicide triggers:
+
+```
+        a:x => x1
+        a:y => y1
+        a:z => z1
+        x1 | y1 | z1 => b
+        a:x | a:y => ! z1
+        a:x | a:z => ! y1
+        a:z | a:y => ! x1
+```
+
+The intention here is that `a` produces one (and only one) of the outputs `x`, `y` or `z`.
+
+```
+        a:x ?=> x1
+        a:y ?=> y1
+        a:z ?=> z1
+        x1 | y1 | z1 => b
+        a:start => b
+```
+
+The additional `a:start => b` dependency is required to ensure `b` gets spawned, even if none  of `x1`, `y1` or `z1` are triggered.
 
 Note that care may be needed with [clock expire triggers](https://cylc.github.io/doc/build/7.8.7/html/suite-config.html#clock-expire-triggers).
 Any tasks downstream of a clock expired task will also need to be clock expired if they could get spawned via another trigger.
@@ -330,4 +380,4 @@ Note that the current documentation says
 "Triggering off an expired task typically requires suicide triggers to remove the workflow that runs if the task has not expired".
 Why didn't we just recommend using the same clock expire trigger for these tasks?
 One downside is that this would trigger multiple "late" events rather than one.
-Is this something we have to live with at Cylc 8?
+Is this something we are happy to live with at Cylc 8?
