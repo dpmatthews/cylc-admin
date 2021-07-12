@@ -10,7 +10,7 @@ A new trigger syntax is proposed which (it is hoped) will resolve many issues:
   Even if `a:x` does get generated it does not necessarily imply that `b` is expected to run.
 
 * `a:x => b` is a "required dependency": when `a` finishes, `b` will be spawned whether or not `a:x` was generated.
-  Furthermore, it implies that `b` is "required" - it is expected to run eventually (once all its prerequisites are met).
+  Furthermore, it implies that once `b` is spawned it is "required" - it is expected to run eventually (once all its prerequisites are met).
   If none of a tasks prerequisites are required dependencies then the task is "optional".
 
 There are a number of possible conditions for tasks once they have been spawned.
@@ -53,7 +53,8 @@ Therefore these tasks need to count towards the runahead limit.
 The same is true for "unhandled" failed tasks.
 
 On the other hand, `waiting` tasks which are "optional" should not affect the runahead limit.
-There is no expectation that they will ever run and, if they are going to run then it is reasonable to expect that there are other "required" tasks in the pool at the same cycle or earlier.
+There is no expectation that they will ever run and, if they are going to run then it is reasonable to expect that there are other "required" tasks in the pool at the same cycle or earlier
+(not true with [future triggers](https://cylc.github.io/doc/build/7.8.7/html/suite-config.html#future-triggers)?).
 
 In the future we should encourage users to add appropriate dependencies in the graph rather than relying on the runahead limit.
 We should consider deprecating runahead limit in its current form and/or changing its default value.
@@ -346,6 +347,7 @@ Here is an example where care is needed when replacing suicide triggers:
 ```
 
 The intention here is that `a` produces one (and only one) of the outputs `x`, `y` or `z`.
+Using the new syntax this would become:
 
 ```
         a:x ?=> x1
