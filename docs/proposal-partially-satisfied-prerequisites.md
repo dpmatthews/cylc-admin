@@ -198,7 +198,7 @@ So, we need to continue to keep any failed tasks in the pool (and consider them 
 
 **Question**:
 
-How we cater for cases where task failure is accepted and does not require any action?
+How do we cater for cases where task failure is accepted and does not require any action?
 We will need to contine to support sucide triggers for Cylc 7 compatibility so we can simply use:
 
 ```
@@ -240,11 +240,11 @@ Consider this example again:
 If `a` succeeds then `r2` will get spawned when `b` succeeds and get stuck `waiting`.
 In theory we can tell that `r1` cannot run.
 However, this would require graph traversal which could be complicated.
-For the moment we will not attempt this and will simply rely on the workflow stalling where appropriate.
+For the moment we will not attempt this.
 
 One problem with this is that, even with required tasks, the workflow may never stall (depending on how the runahead limit is set).
 For required tasks they should at least be visible to the user and there should also be another visible cause (blocked or failed tasks) unless there is an error in the graph.
-However, the example above shows how we can be `waiting` "optional" tasks which will never get run.
+However, the example above shows how there can be `waiting` "optional" tasks which will never get run.
 This means they could build up to a large number in a long running cycling workflow.
 
 **Question**:
@@ -253,9 +253,14 @@ Do we need to housekeep these tasks?
 Once there are no other "required" tasks or preparing/running/failed in the pool at any of the cycles referenced by the incomplete prerequisites or earlier can we remove them?
 Do [future triggers](https://cylc.github.io/doc/build/7.8.7/html/suite-config.html#future-triggers) complicate this?
 
-Note that when a task is spawned then, if it has optional prerequisites then we don't know whether these prerequisites have already completed (and not generated the requied output).
+Note that when a task is spawned then, if it has optional prerequisites, we don't know whether these prerequisites have already completed (and not generated the required output).
 A database query will be required to determine this.
 The same is not true for required prerequisites (the task is always spawned at completion).
+
+An alternative approach for optional tasks would be to only spawn them once their prerequisites have been met.
+This would avoid any need to housekeep them.
+For tasks with multiple prerequisites it would require additional database queries.
+However, this may not be a big deal given that not many workflows are likely to have large numbers of optional tasks.
 
 ## Cylc 7 compatibility
 
