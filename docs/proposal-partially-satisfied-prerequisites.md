@@ -132,7 +132,7 @@ The new trigger syntax also deals with this example:
         a:fail ?=> r1 ?=> r2
 ```
 
-In this case, recovering from the failure of `a` involves running `r1` before running `b` and then running `r2 once `b1` has succeeded.
+In this case, recovering from the failure of `a` involves running `r1` before running `b` and then running `r2` once `b1` has succeeded.
 If `a` succeeds then `r2` will get spawned when `b` succeeds and get stuck `waiting`.
 However, since it is "optional" this is not a problem - it will not cause a stall.
 
