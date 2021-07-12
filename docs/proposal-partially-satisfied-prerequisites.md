@@ -171,8 +171,8 @@ However, the user needs the workflow to be running in order to address the probl
 **Proposal**:
 Change the default for `abort on timeout` to `True` and set the default for the `timeout` event to `PT1H`.
 
-We should also improve the visibility of stalled workflows.
-*  `cylc scan` and the UI gscan panel should clearly indicate if a running workflow is stalled.
+We should also improve the visibility of stalled workflows and blocked tasks.
+*  `cylc scan` and the UI gscan panel should clearly indicate if a running workflow is stalled or has blocked tasks.
 * Similarly for stopped workflows (also other states: "not started", "run to completion", "died"?, etc).
 * Stopped workflows need to be ordered by last activity time (as they are in cylc review) so that any workflows which have stopped unexpectedly don't get missed.
 
@@ -183,7 +183,8 @@ Does the new syntax mean we can simplify our handling of unhandled task failures
 In the simple case of `foo => bar`, if `foo` fails we'll be able to identify the unsatisfied `bar` as a problem even if we don't keep the failed `foo` in the pool.
 However, keeping it in the pool (n=0) is likely to be more convenient and consistent.
 In any case, what happens if `bar` fails - we certainly need to keep that in the pool.
-Also, we can't use optional dependencies as an indicator that failure is acceptable.
+
+Note that we can't use optional dependencies as an indicator that failure is acceptable.
 Consider this earlier example:
 
 ```
